@@ -7,15 +7,25 @@ import {
 	Text,
 	Image,
 	ActivityIndicator,
-	View,
+	StatusBar,
 } from "react-native";
 import colors from "../assets/colors";
+import { OauthContext } from "../context/oauth";
+// import ApiService from "../services/api";
 
 function Home({ navigation }) {
 	const [login, setLogin] = React.useState("");
 	const [loading, setLoading] = React.useState(false);
+	const { token, expiry_timestamp } = React.useContext(OauthContext);
+
+	React.useEffect(() => {
+		if (!token) setLoading(true);
+		else setLoading(false);
+	}, [token]);
+
 	return (
 		<SafeAreaView style={styles.container}>
+			<StatusBar barStyle="light-content" backgroundColor={colors.background} />
 			<Image
 				style={styles.logo}
 				source={require("../assets/images/logo.png")}
@@ -28,7 +38,7 @@ function Home({ navigation }) {
 				placeholderTextColor={colors.lightText}
 			/>
 			<Pressable
-				style={({ pressed, disabled }) => [
+				style={({ pressed }) => [
 					{
 						backgroundColor:
 							loading || !login
@@ -41,11 +51,7 @@ function Home({ navigation }) {
 					styles.button,
 				]}
 				onPress={() => {
-					setLoading(true);
-					setTimeout(() => {
-						setTimeout(false);
-						navigation.navigate("Profile");
-					}, 5000);
+					navigation.navigate("Profile");
 				}}
 				disabled={loading || !login}
 			>
