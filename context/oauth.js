@@ -1,10 +1,8 @@
 import * as React from "react";
-import { AsyncStorage } from "react-native";
-import ApiService from "../services/api";
+import ApiHelper from "../helpers/api";
 import Storage from "../services/storage";
+import { token_storage_key } from "../config/default";
 
-// const Context = React.createContext({});
-// const OauthContext = (init) => React.useContext(Context);
 const OauthContext = React.createContext();
 
 function OauthContextProvider({ children }) {
@@ -15,27 +13,30 @@ function OauthContextProvider({ children }) {
 	});
 
 	const generateToken = async () => {
-		console.log("generit hh");
-		let token = await ApiService.getToken();
-		await Storage.save({
-			key: "A01p16I09",
-			data: { token },
-			expires: token.expires_in * 1000,
-		});
-		setState({
-			token: token.access_token,
-			expiry_timestamp: (token.created_at + token.expires_in) * 1000,
-		});
-		return token;
+		try {
+			let token = await ApiHelper.getToken();
+			await Storage.save({
+				key: token_storage_key,
+				data: token,
+				expires: token.expires_in * 1000,
+			});
+			setState({
+				token: token.access_token,
+				expiry_timestamp: new Date().valueOf() + token.expires_in * 1000,
+			});
+			return token;
+		} catch (error) {
+			console.log(error);
+		}
 	};
 
 	const getToken = async () => {
 		try {
-			let { token } = await Storage.load({
-				key: "A01p16I09",
+			let token = await Storage.load({
+				key: token_storage_key,
 			});
 			if (token === null) {
-				token = generateToken();
+				token = await generateToken();
 			} else {
 				const token_expire_at_timestamp =
 					(token.created_at + token.expires_in) * 1000;
@@ -51,11 +52,10 @@ function OauthContextProvider({ children }) {
 				}
 			}
 		} catch (err) {
-			console.warn(err.message);
 			if (err.name) {
 				if (err.name === "NotFoundError" || err.name === "ExpiredError") {
 					try {
-						let token = await generateToken();
+						await generateToken();
 					} catch (error) {
 						console.log(error);
 					}
@@ -69,7 +69,15 @@ function OauthContextProvider({ children }) {
 	}, []);
 
 	return (
-		<OauthContext.Provider value={{ ...state, generateToken }}>
+		<OauthContext.Provider
+			value={{
+				...state,
+				checkAndGenerateToken: async () => {
+					if (!state.token || new Date().valueOf() >= state.expiry_timestamp)
+						await generateToken();
+				},
+			}}
+		>
 			{children}
 		</OauthContext.Provider>
 	);

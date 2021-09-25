@@ -1,24 +1,16 @@
 import axios from "axios";
-import config from "../config/default.json";
+import { api_path } from "../config/default";
 
-const { grant_type, client_id, client_secret, authorize_uri } = config;
+const Api = (token = null) => {
+	let data = {
+		baseURL: api_path,
+		headers: {
+			"Content-Type": "application/json",
+		},
+	};
+	if (token) data.headers["Authorization"] = "Bearer " + token;
 
-const ApiService = {
-	getToken: async () => {
-		try {
-			const { data } = await axios.post(authorize_uri, {
-				grant_type,
-				client_id,
-				client_secret,
-			});
-			return data;
-		} catch (error) {
-			throw error;
-		}
-	},
-	findUser: async (login) => {
-		/* TO DO */
-	},
+	return axios.create(data);
 };
 
-export default ApiService;
+export default Api;
