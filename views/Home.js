@@ -61,11 +61,12 @@ function Home({ navigation }) {
 		return unsubscribe;
 	}, [navigation]);
 
-	const findUser = async () => {
+	const findUser = async (loginQuery = "") => {
+		let final_login = loginQuery !== "" ? loginQuery : login;
 		setLoading(true);
 		try {
 			await checkAndGenerateToken();
-			const user_data = await ApiHelper.findUser(login);
+			const user_data = await ApiHelper.findUser(final_login);
 			await SavingHelper.setNewRecent(user_data);
 			setLoading(false);
 			navigation.navigate("Profile", { user_data });
@@ -102,8 +103,8 @@ function Home({ navigation }) {
 							loading || !login
 								? colors.disabledLight
 								: pressed
-								? colors.darkText
-								: colors.lightText,
+									? colors.darkText
+									: colors.lightText,
 						color: pressed ? colors.white : colors.black,
 					},
 					styles.button,
@@ -125,7 +126,9 @@ function Home({ navigation }) {
 				style={{ width: "100%", marginTop: 10 }}
 				data={recents}
 				renderItem={({ item }) => (
-					<TouchableOpacity key={item.login}>
+					<TouchableOpacity key={item.login} onPress={() => {
+						findUser(item.login);
+					}}>
 						<View style={styles.saving_entry}>
 							<Image style={styles.saving_avatar} source={item.avatar} />
 							<Text style={styles.saving_login}>{item.login}</Text>

@@ -8,6 +8,7 @@ import {
 	TouchableOpacity,
 	Linking,
 	Alert,
+	ScrollView,
 } from "react-native";
 import colors from "../assets/colors";
 import Feather from "react-native-vector-icons/Feather";
@@ -20,21 +21,28 @@ function Profile({ route, navigation }) {
 	const user = route.params.user_data;
 	const [cursusI, setCursusI] = React.useState(0);
 	const [level, setLevel] = React.useState(0);
-	const max_cursuses = user.cursus_users.length;
+	const [projects, setProjects] = React.useState([]);
+	// const max_cursuses = user.cursus_users.length;
 	const level_partie_entiere = parseInt(user.cursus_users[cursusI].level);
 	const level_partie_flottante = parseInt(
 		(user.cursus_users[cursusI].level -
 			parseInt(user.cursus_users[cursusI].level)) *
-			100
+		100
 	);
-
+	/**
+	 * Triggers on cursus change.
+	 */
 	React.useEffect(() => {
+		/** Setting the level */
 		const level_partie_flottante = parseInt(
 			(user.cursus_users[cursusI].level -
 				parseInt(user.cursus_users[cursusI].level)) *
-				100
+			100
 		);
 		setLevel(level_partie_flottante / 100);
+		/** Setting the projects */
+		const projects = user.projects_users.filter(item => item.cursus_ids.includes(user.cursus_users[cursusI].cursus_id));
+		setProjects(projects);
 	}, [cursusI]);
 
 	return (
@@ -127,8 +135,33 @@ function Profile({ route, navigation }) {
 						))}
 					</Picker>
 				</View>
+				<View style={styles.round_thingy}></View>
 			</View>
-			<View style={styles.scrollable}></View>
+			<ScrollView style={styles.scrollable}>
+				<View style={styles.projects_title}>
+					<Feather name="pie-chart" color={colors.white} size={20} />
+					<Text style={styles.projects_title_text}>Projects:</Text>
+				</View>
+				{
+					projects.map((item, index) => (
+						["in_progress", "finished", "waiting_for_correction"].includes(item.status) ?
+							(
+								<View style={[styles.project_entry, {
+									backgroundColor: index % 2 ? colors.darkText : colors.veryDarkText
+								}]} key={item.project?.id}>
+									<View style={styles.project_entry_col1}>{item.status === "finished" ? <Text style={[styles.final_mark, {
+										color: item["validated?"] ? colors.success : colors.failure
+									}]}>{item.final_mark}</Text> : <Feather name="clock" size={30} color={colors.warning} />}</View>
+									<View style={styles.project_entry_col2}>
+										<Text style={styles.project_name}>{item.project?.name}</Text>
+									</View>
+								</View>
+							)
+							: <></>
+
+					))
+				}
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -145,6 +178,7 @@ const styles = StyleSheet.create({
 		// justifyContent: "center",
 		alignItems: "center",
 		position: "relative",
+		overflow: "visible",
 	},
 	header_navs: {
 		flexDirection: "row",
@@ -211,7 +245,56 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "center",
 		alignItems: "center",
+		marginBottom: -20,
 	},
+	round_thingy: {
+		width: "100%",
+		height: 80,
+		bottom: -35,
+		zIndex: -1,
+		backgroundColor: "#2F2F2F",
+		borderRadius: 1000,
+		position: "absolute",
+	},
+	scrollable: {
+		zIndex: -1,
+		paddingVertical: 40,
+	},
+	projects_title: {
+		flexDirection: "row",
+		marginHorizontal: 20,
+		marginVertical: 10,
+		alignItems: "center"
+	},
+	projects_title_text: {
+		fontSize: 20,
+		color: colors.white,
+		marginHorizontal: 10,
+		fontWeight: "bold"
+	},
+	project_entry: {
+		height: 70,
+		// backgroundColor: "red",
+		flexDirection: "row",
+		alignItems: "center",
+		// paddingHorizontal: 20
+	},
+	project_entry_col1: {
+		flex: 1,
+		alignItems: "center"
+	},
+	project_entry_col2: {
+		flex: 5
+	},
+	final_mark: {
+		fontSize: 25,
+		fontWeight: "bold",
+	},
+	project_name: {
+		color: colors.white,
+		fontSize: 15,
+		// marginLeft: 10,
+	}
 });
 
 export default Profile;
