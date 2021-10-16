@@ -8,26 +8,40 @@ import {
 	TouchableOpacity,
 	Linking,
 	Alert,
-	ScrollView,
+	Dimensions,
+	// ScrollView,
+	FlatList,
 } from "react-native";
 import colors from "../assets/colors";
 import Feather from "react-native-vector-icons/Feather";
 import AnimatedLevelCircle from "../components/AnimatedLevelCircle";
 import { Picker } from "@react-native-community/picker";
 import SaveIcon from "../components/SaveIcon";
+import {
+	VictoryArea,
+	VictoryChart,
+	VictoryGroup,
+	VictoryLabel,
+	VictoryPolarAxis,
+	VictoryTheme,
+} from "victory-native";
 Feather.loadFont();
 
 function Profile({ route, navigation }) {
+	const windowWidth = Dimensions.get("window").width;
+	// const windowHeight = Dimensions.get("window").height;
 	const user = route.params.user_data;
 	const [cursusI, setCursusI] = React.useState(0);
 	const [level, setLevel] = React.useState(0);
 	const [projects, setProjects] = React.useState([]);
+	const [skills, setSkills] = React.useState([]);
+	const [selected, setSelected] = React.useState("projects");
 	// const max_cursuses = user.cursus_users.length;
 	const level_partie_entiere = parseInt(user.cursus_users[cursusI].level);
 	const level_partie_flottante = parseInt(
 		(user.cursus_users[cursusI].level -
 			parseInt(user.cursus_users[cursusI].level)) *
-		100
+			100
 	);
 	/**
 	 * Triggers on cursus change.
@@ -37,13 +51,24 @@ function Profile({ route, navigation }) {
 		const level_partie_flottante = parseInt(
 			(user.cursus_users[cursusI].level -
 				parseInt(user.cursus_users[cursusI].level)) *
-			100
+				100
 		);
 		setLevel(level_partie_flottante / 100);
 		/** Setting the projects */
-		const projects = user.projects_users.filter(item => item.cursus_ids.includes(user.cursus_users[cursusI].cursus_id));
+		const cursus_id = user.cursus_users[cursusI].cursus_id;
+		const projects = user.projects_users.filter((item) =>
+			item.cursus_ids.includes(cursus_id)
+		);
+		const new_cursus_users = user.cursus_users.filter(
+			(item) => item.cursus_id === cursus_id
+		);
+		if (new_cursus_users[0]) {
+			setSkills(new_cursus_users[0].skills);
+		}
 		setProjects(projects);
 	}, [cursusI]);
+
+	// React.useEffect(() => console.log(skills), [skills]);
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -137,31 +162,98 @@ function Profile({ route, navigation }) {
 				</View>
 				<View style={styles.round_thingy}></View>
 			</View>
-			<ScrollView style={styles.scrollable}>
-				<View style={styles.projects_title}>
+			<View style={styles.buttons_group}>
+				<TouchableOpacity
+					style={[
+						styles.buttons_group__item,
+						{
+							borderColor: selected === "projects" ? colors.white : "#00000000",
+						},
+					]}
+					onPress={() => setSelected("projects")}
+				>
 					<Feather name="pie-chart" color={colors.white} size={20} />
-					<Text style={styles.projects_title_text}>Projects:</Text>
-				</View>
-				{
-					projects.map((item, index) => (
-						["in_progress", "finished", "waiting_for_correction"].includes(item.status) ?
-							(
-								<View style={[styles.project_entry, {
-									backgroundColor: index % 2 ? colors.darkText : colors.veryDarkText
-								}]} key={item.project?.id}>
-									<View style={styles.project_entry_col1}>{item.status === "finished" ? <Text style={[styles.final_mark, {
-										color: item["validated?"] ? colors.success : colors.failure
-									}]}>{item.final_mark}</Text> : <Feather name="clock" size={30} color={colors.warning} />}</View>
-									<View style={styles.project_entry_col2}>
-										<Text style={styles.project_name}>{item.project?.name}</Text>
-									</View>
+					<Text style={styles.projects_title_text}>Projects</Text>
+				</TouchableOpacity>
+				<TouchableOpacity
+					style={[
+						styles.buttons_group__item,
+						{
+							borderColor: selected === "skills" ? colors.white : "#00000000",
+						},
+					]}
+					onPress={() => setSelected("skills")}
+				>
+					<Feather name="award" color={colors.white} size={20} />
+					<Text style={styles.projects_title_text}>Skills</Text>
+				</TouchableOpacity>
+			</View>
+			{selected === "projects" ? (
+				<FlatList
+					data={projects}
+					keyExtractor={(item) => item.project.id.toString()}
+					renderItem={({ item, index }) =>
+						["in_progress", "finished", "waiting_for_correction"].includes(
+							item.status
+						) ? (
+							<View
+								style={[
+									styles.project_entry,
+									{
+										backgroundColor:
+											index % 2 ? colors.darkText : colors.veryDarkText,
+									},
+								]}
+							>
+								<View style={styles.project_entry_col1}>
+									{item.status === "finished" ? (
+										<Text
+											style={[
+												styles.final_mark,
+												{
+													color: item["validated?"]
+														? colors.success
+														: colors.failure,
+												},
+											]}
+										>
+											{item.final_mark}
+										</Text>
+									) : (
+										<Feather name="clock" size={30} color={colors.warning} />
+									)}
 								</View>
-							)
-							: <></>
-
-					))
-				}
-			</ScrollView>
+								<View style={styles.project_entry_col2}>
+									<Text style={styles.project_name}>{item.project?.name}</Text>
+								</View>
+							</View>
+						) : (
+							<></>
+						)
+					}
+				/>
+			) : (
+				<FlatList
+					data={skills}
+					keyExtractor={(item) => item.id.toString()}
+					horizontal
+					renderItem={({ item }) => (
+						<View
+							style={[
+								styles.skill_entry_container,
+								{ width: windowWidth + 5, height: "100%" },
+							]}
+						>
+							<View style={styles.skill_entry}>
+								<Text style={styles.skill_level}>{item.level.toFixed(2)}</Text>
+								<Text style={styles.skill_name}>{item.name}</Text>
+							</View>
+						</View>
+					)}
+					pagingEnabled={true}
+					style={{ width: windowWidth + 5, height: "100%" }}
+				/>
+			)}
 		</SafeAreaView>
 	);
 }
@@ -264,13 +356,13 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		marginHorizontal: 20,
 		marginVertical: 10,
-		alignItems: "center"
+		alignItems: "center",
 	},
 	projects_title_text: {
 		fontSize: 20,
 		color: colors.white,
 		marginHorizontal: 10,
-		fontWeight: "bold"
+		fontWeight: "bold",
 	},
 	project_entry: {
 		height: 70,
@@ -281,10 +373,10 @@ const styles = StyleSheet.create({
 	},
 	project_entry_col1: {
 		flex: 1,
-		alignItems: "center"
+		alignItems: "center",
 	},
 	project_entry_col2: {
-		flex: 5
+		flex: 5,
 	},
 	final_mark: {
 		fontSize: 25,
@@ -294,7 +386,42 @@ const styles = StyleSheet.create({
 		color: colors.white,
 		fontSize: 15,
 		// marginLeft: 10,
-	}
+	},
+	buttons_group: {
+		marginTop: 40,
+		flexDirection: "row",
+		justifyContent: "center",
+	},
+	buttons_group__item: {
+		flexDirection: "row",
+		width: "50%",
+		borderBottomWidth: 3,
+		borderColor: colors.white,
+		paddingVertical: 10,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	skill_entry_container: {
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	skill_entry: {
+		backgroundColor: colors.veryDarkText,
+		width: "60%",
+		height: "60%",
+		borderRadius: 50,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	skill_name: {
+		color: colors.white,
+		fontWeight: "bold",
+	},
+	skill_level: {
+		fontSize: 50,
+		fontWeight: "bold",
+		color: colors.success,
+	},
 });
 
 export default Profile;

@@ -62,6 +62,7 @@ function Home({ navigation }) {
 	}, [navigation]);
 
 	const findUser = async (loginQuery = "") => {
+		// console.log(loginQuery);
 		let final_login = loginQuery !== "" ? loginQuery : login;
 		setLoading(true);
 		try {
@@ -103,13 +104,13 @@ function Home({ navigation }) {
 							loading || !login
 								? colors.disabledLight
 								: pressed
-									? colors.darkText
-									: colors.lightText,
+								? colors.darkText
+								: colors.lightText,
 						color: pressed ? colors.white : colors.black,
 					},
 					styles.button,
 				]}
-				onPress={findUser}
+				onPress={() => findUser(login)}
 				disabled={loading || !login}
 			>
 				{loading ? (
@@ -126,9 +127,12 @@ function Home({ navigation }) {
 				style={{ width: "100%", marginTop: 10 }}
 				data={recents}
 				renderItem={({ item }) => (
-					<TouchableOpacity key={item.login} onPress={() => {
-						findUser(item.login);
-					}}>
+					<TouchableOpacity
+						key={item.login}
+						onPress={() => {
+							findUser(item.login);
+						}}
+					>
 						<View style={styles.saving_entry}>
 							<Image style={styles.saving_avatar} source={item.avatar} />
 							<Text style={styles.saving_login}>{item.login}</Text>
@@ -163,6 +167,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 		color: colors.white,
+		paddingTop: 50,
 	},
 	input: {
 		height: 32,
