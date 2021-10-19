@@ -9,7 +9,6 @@ import {
 	Linking,
 	Alert,
 	Dimensions,
-	// ScrollView,
 	FlatList,
 } from "react-native";
 import colors from "../assets/colors";
@@ -17,45 +16,66 @@ import Feather from "react-native-vector-icons/Feather";
 import AnimatedLevelCircle from "../components/AnimatedLevelCircle";
 import { Picker } from "@react-native-community/picker";
 import SaveIcon from "../components/SaveIcon";
-import {
-	VictoryArea,
-	VictoryChart,
-	VictoryGroup,
-	VictoryLabel,
-	VictoryPolarAxis,
-	VictoryTheme,
-} from "victory-native";
+import SavingHelper from "../helpers/saving";
+import { saved_storage_key } from "../config/default";
+import useOrientation from "../hooks/useOrientation";
+import ModalDropdown from "react-native-modal-dropdown";
 Feather.loadFont();
 
 function Profile({ route, navigation }) {
 	const windowWidth = Dimensions.get("window").width;
-	// const windowHeight = Dimensions.get("window").height;
+	const orientation = useOrientation();
 	const user = route.params.user_data;
 	const [cursusI, setCursusI] = React.useState(0);
 	const [level, setLevel] = React.useState(0);
 	const [projects, setProjects] = React.useState([]);
 	const [skills, setSkills] = React.useState([]);
+	const [saved, setSaved] = React.useState(false);
 	const [selected, setSelected] = React.useState("projects");
-	// const max_cursuses = user.cursus_users.length;
-	const level_partie_entiere = parseInt(user.cursus_users[cursusI].level);
-	const level_partie_flottante = parseInt(
-		(user.cursus_users[cursusI].level -
-			parseInt(user.cursus_users[cursusI].level)) *
-			100
-	);
+	let level_partie_entiere;
+	let level_partie_flottante;
+	if (user.cursus_users[cursusI]) {
+		level_partie_entiere = parseInt(user.cursus_users[cursusI].level);
+		level_partie_flottante = parseInt(
+			(user.cursus_users[cursusI].level -
+				parseInt(user.cursus_users[cursusI].level)) *
+				100
+		);
+	} else {
+		level_partie_entiere = 0;
+		level_partie_flottante = 0;
+	}
+	/**
+	 * Check if the user is saved
+	 */
+	React.useEffect(() => {
+		const isItSaved = async () => {
+			try {
+				const isSaved = await SavingHelper.savedIncludesItem(user);
+				setSaved(isSaved);
+			} catch (error) {
+				console.log(error);
+			}
+		};
+		isItSaved();
+	}, []);
 	/**
 	 * Triggers on cursus change.
 	 */
 	React.useEffect(() => {
 		/** Setting the level */
-		const level_partie_flottante = parseInt(
-			(user.cursus_users[cursusI].level -
-				parseInt(user.cursus_users[cursusI].level)) *
-				100
-		);
+		const level_partie_flottante = user.cursus_users[cursusI]
+			? parseInt(
+					(user.cursus_users[cursusI].level -
+						parseInt(user.cursus_users[cursusI].level)) *
+						100
+			  )
+			: 0;
 		setLevel(level_partie_flottante / 100);
 		/** Setting the projects */
-		const cursus_id = user.cursus_users[cursusI].cursus_id;
+		const cursus_id = user.cursus_users[cursusI]
+			? user.cursus_users[cursusI].cursus_id
+			: -1;
 		const projects = user.projects_users.filter((item) =>
 			item.cursus_ids.includes(cursus_id)
 		);
@@ -68,17 +88,48 @@ function Profile({ route, navigation }) {
 		setProjects(projects);
 	}, [cursusI]);
 
-	// React.useEffect(() => console.log(skills), [skills]);
+	const handleSave = async () => {
+		try {
+			if (saved) {
+				await SavingHelper.removeSaved(user);
+				setSaved(false);
+			} else {
+				await SavingHelper.setNewSaved(user);
+				setSaved(true);
+			}
+		} catch (error) {
+			if (error.name) {
+				if (error.name === "NotFoundError" || error.name === "ExpiredError") {
+					try {
+						const savings = [];
+						await storage.save({ key: saved_storage_key, data: savings });
+					} catch (error) {
+						console.log(error);
+					}
+				}
+			} else console.log(error);
+		}
+	};
 
 	return (
-		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
+		<SafeAreaView
+			style={
+				orientation === "portrait"
+					? styles.container
+					: styles_landscape.container
+			}
+		>
+			<View
+				style={
+					orientation === "portrait" ? styles.header : styles_landscape.header
+				}
+			>
 				<View style={styles.header_navs}>
 					<TouchableOpacity onPress={() => navigation.goBack()}>
 						<Feather name="chevron-left" size={30} color={colors.white} />
 					</TouchableOpacity>
-					<TouchableOpacity>
-						<SaveIcon size={25} />
+					<TouchableOpacity onPress={() => handleSave()}>
+						<SaveIcon size={25} fill={saved} />
 					</TouchableOpacity>
 				</View>
 				<View style={styles.level_container}>
@@ -146,114 +197,207 @@ function Profile({ route, navigation }) {
 					<Text style={{ color: colors.white, marginHorizontal: 5 }}>
 						Cursus:
 					</Text>
-					<Picker
+					{/* <Picker
 						selectedValue={cursusI}
-						style={{
-							height: 50,
-							width: 230,
-							color: colors.white,
-						}}
+						style={styles.picker}
 						onValueChange={(itemValue) => setCursusI(itemValue)}
+						mode="dropdown"
 					>
 						{user.cursus_users.map((item, key) => (
-							<Picker.Item label={item.cursus.name} value={key} key={key} />
+							<Picker.Item
+								label={item.cursus.name}
+								style={styles.picker_item}
+								value={key}
+								key={key}
+							/>
 						))}
-					</Picker>
-				</View>
-				<View style={styles.round_thingy}></View>
-			</View>
-			<View style={styles.buttons_group}>
-				<TouchableOpacity
-					style={[
-						styles.buttons_group__item,
-						{
-							borderColor: selected === "projects" ? colors.white : "#00000000",
-						},
-					]}
-					onPress={() => setSelected("projects")}
-				>
-					<Feather name="pie-chart" color={colors.white} size={20} />
-					<Text style={styles.projects_title_text}>Projects</Text>
-				</TouchableOpacity>
-				<TouchableOpacity
-					style={[
-						styles.buttons_group__item,
-						{
-							borderColor: selected === "skills" ? colors.white : "#00000000",
-						},
-					]}
-					onPress={() => setSelected("skills")}
-				>
-					<Feather name="award" color={colors.white} size={20} />
-					<Text style={styles.projects_title_text}>Skills</Text>
-				</TouchableOpacity>
-			</View>
-			{selected === "projects" ? (
-				<FlatList
-					data={projects}
-					keyExtractor={(item) => item.project.id.toString()}
-					renderItem={({ item, index }) =>
-						["in_progress", "finished", "waiting_for_correction"].includes(
-							item.status
-						) ? (
+					</Picker> */}
+					<ModalDropdown
+						style={styles.picker}
+						textStyle={{ color: colors.white }}
+						defaultIndex={cursusI}
+						defaultValue={user.cursus_users[cursusI]?.cursus?.name}
+						options={user.cursus_users.map((item) => item.cursus.name)}
+						adjustFrame={(style) => ({
+							...style,
+							height: user.cursus_users.length * 40,
+						})}
+						renderRow={(option, index, selected) => (
 							<View
-								style={[
-									styles.project_entry,
-									{
-										backgroundColor:
-											index % 2 ? colors.darkText : colors.veryDarkText,
-									},
-								]}
+								style={{
+									paddingHorizontal: 20,
+									paddingVertical: 10,
+									backgroundColor: selected
+										? colors.veryDarkText
+										: colors.darkText,
+									height: 40,
+								}}
 							>
-								<View style={styles.project_entry_col1}>
-									{item.status === "finished" ? (
-										<Text
-											style={[
-												styles.final_mark,
-												{
-													color: item["validated?"]
-														? colors.success
-														: colors.failure,
-												},
-											]}
-										>
-											{item.final_mark}
-										</Text>
-									) : (
-										<Feather name="clock" size={30} color={colors.warning} />
-									)}
-								</View>
-								<View style={styles.project_entry_col2}>
-									<Text style={styles.project_name}>{item.project?.name}</Text>
-								</View>
+								<Text
+									style={{
+										color: selected ? colors.white : colors.lightText,
+									}}
+								>
+									{option}
+								</Text>
 							</View>
-						) : (
-							<></>
-						)
-					}
-				/>
-			) : (
-				<FlatList
-					data={skills}
-					keyExtractor={(item) => item.id.toString()}
-					horizontal
-					renderItem={({ item }) => (
+						)}
+						onSelect={(index) => setCursusI(index)}
+					>
 						<View
-							style={[
-								styles.skill_entry_container,
-								{ width: windowWidth + 5, height: "100%" },
-							]}
+							style={{
+								flexDirection: "row",
+								alignItems: "center",
+								justifyContent: "space-between",
+								width: 160,
+								height: "100%",
+							}}
 						>
-							<View style={styles.skill_entry}>
-								<Text style={styles.skill_level}>{item.level.toFixed(2)}</Text>
-								<Text style={styles.skill_name}>{item.name}</Text>
-							</View>
+							<Text style={{ color: colors.white }}>
+								{user.cursus_users[cursusI]?.cursus?.name}
+							</Text>
+							<Feather name="chevron-down" color={colors.white} />
 						</View>
-					)}
-					pagingEnabled={true}
-					style={{ width: windowWidth + 5, height: "100%" }}
-				/>
-			)}
+					</ModalDropdown>
+				</View>
+				{orientation === "portrait" ? (
+					<View style={styles.round_thingy}></View>
+				) : (
+					<></>
+				)}
+			</View>
+			<View
+				style={orientation === "portrait" ? styles.col2 : styles_landscape.col2}
+			>
+				<View
+					style={
+						orientation === "portrait"
+							? styles.buttons_group
+							: styles_landscape.buttons_group
+					}
+				>
+					<TouchableOpacity
+						style={[
+							styles.buttons_group__item,
+							{
+								borderColor:
+									selected === "projects" ? colors.white : "#00000000",
+							},
+						]}
+						onPress={() => setSelected("projects")}
+					>
+						<Feather name="pie-chart" color={colors.white} size={20} />
+						<Text style={styles.projects_title_text}>Projects</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={[
+							styles.buttons_group__item,
+							{
+								borderColor: selected === "skills" ? colors.white : "#00000000",
+							},
+						]}
+						onPress={() => setSelected("skills")}
+					>
+						<Feather name="award" color={colors.white} size={20} />
+						<Text style={styles.projects_title_text}>Skills</Text>
+					</TouchableOpacity>
+				</View>
+				{selected === "projects" ? (
+					<FlatList
+						data={projects}
+						keyExtractor={(item) => item.project.id.toString()}
+						renderItem={({ item, index }) =>
+							["in_progress", "finished", "waiting_for_correction"].includes(
+								item.status
+							) ? (
+								<View
+									style={[
+										styles.project_entry,
+										{
+											backgroundColor:
+												index % 2 ? colors.darkText : colors.veryDarkText,
+										},
+									]}
+								>
+									<View style={styles.project_entry_col1}>
+										{item.status === "finished" ? (
+											<Text
+												style={[
+													styles.final_mark,
+													{
+														color: item["validated?"]
+															? colors.success
+															: colors.failure,
+													},
+												]}
+											>
+												{item.final_mark}
+											</Text>
+										) : (
+											<Feather name="clock" size={30} color={colors.warning} />
+										)}
+									</View>
+									<View style={styles.project_entry_col2}>
+										<Text style={styles.project_name}>
+											{item.project?.name}
+										</Text>
+									</View>
+								</View>
+							) : (
+								<></>
+							)
+						}
+					/>
+				) : (
+					<>
+						<FlatList
+							data={skills}
+							keyExtractor={(item) => item.id.toString()}
+							horizontal
+							renderItem={({ item }) => (
+								<View
+									style={[
+										styles.skill_entry_container,
+										{
+											width:
+												orientation === "portrait"
+													? windowWidth + 5
+													: (3 * windowWidth) / 5 + 5,
+											height: "100%",
+										},
+									]}
+								>
+									<View style={styles.skill_entry}>
+										<Text style={styles.skill_level}>
+											{item.level.toFixed(2)}
+										</Text>
+										<Text style={styles.skill_name}>{item.name}</Text>
+									</View>
+								</View>
+							)}
+							pagingEnabled={true}
+							style={{
+								width:
+									orientation === "portrait"
+										? windowWidth + 5
+										: (3 * windowWidth) / 5 + 5,
+								height: "100%",
+							}}
+						/>
+						<View style={styles.swipe_for_more}>
+							<Feather name="chevron-left" color={colors.lightText} size={10} />
+							<Text style={{ color: colors.lightText, fontSize: 10 }}>
+								Swipe for more
+							</Text>
+							<Feather
+								name="chevron-right"
+								color={colors.lightText}
+								size={10}
+							/>
+						</View>
+					</>
+				)}
+			</View>
 		</SafeAreaView>
 	);
 }
@@ -267,10 +411,14 @@ const styles = StyleSheet.create({
 		paddingTop: 10,
 		backgroundColor: colors.background,
 		minHeight: 300,
-		// justifyContent: "center",
 		alignItems: "center",
 		position: "relative",
 		overflow: "visible",
+	},
+	col2: {
+		// height: "100%",
+		// width: "100%",
+		flex: 1,
 	},
 	header_navs: {
 		flexDirection: "row",
@@ -335,9 +483,27 @@ const styles = StyleSheet.create({
 	cursus_picker_container: {
 		color: colors.white,
 		flexDirection: "row",
+		borderRadius: 20,
 		justifyContent: "center",
 		alignItems: "center",
 		marginBottom: -20,
+		// width: "80%",
+		position: "relative",
+	},
+	picker: {
+		height: 50,
+		width: 200,
+		marginVertical: 10,
+		color: colors.white,
+		backgroundColor: colors.darkText,
+		borderRadius: 20,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 20,
+	},
+	picker_item: {
+		color: colors.white,
 	},
 	round_thingy: {
 		width: "100%",
@@ -421,6 +587,42 @@ const styles = StyleSheet.create({
 		fontSize: 50,
 		fontWeight: "bold",
 		color: colors.success,
+	},
+	swipe_for_more: {
+		position: "absolute",
+		bottom: 10,
+		width: "100%",
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+});
+
+const styles_landscape = StyleSheet.create({
+	container: {
+		backgroundColor: colors.darkText,
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+	},
+	header: {
+		paddingTop: 10,
+		backgroundColor: colors.background,
+		minHeight: 300,
+		alignItems: "center",
+		justifyContent: "center",
+		position: "relative",
+		overflow: "visible",
+		height: "100%",
+		flex: 2,
+	},
+	col2: {
+		flex: 3,
+	},
+	buttons_group: {
+		flexDirection: "row",
+		justifyContent: "center",
+		marginTop: 10,
 	},
 });
 

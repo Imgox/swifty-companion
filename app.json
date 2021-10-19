@@ -3,7 +3,7 @@
     "name": "swifty-companion",
     "slug": "swifty-companion",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -23,7 +23,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "swifty.companion"
     },
     "web": {
       "favicon": "./assets/favicon.png"
