@@ -10,11 +10,11 @@ import {
 	Alert,
 	Dimensions,
 	FlatList,
+	StatusBar,
 } from "react-native";
 import colors from "../assets/colors";
 import Feather from "react-native-vector-icons/Feather";
 import AnimatedLevelCircle from "../components/AnimatedLevelCircle";
-import { Picker } from "@react-native-community/picker";
 import SaveIcon from "../components/SaveIcon";
 import SavingHelper from "../helpers/saving";
 import { saved_storage_key } from "../config/default";
@@ -119,6 +119,7 @@ function Profile({ route, navigation }) {
 					: styles_landscape.container
 			}
 		>
+			<StatusBar barStyle="light-content" backgroundColor={colors.background} />
 			<View
 				style={
 					orientation === "portrait" ? styles.header : styles_landscape.header
@@ -183,7 +184,7 @@ function Profile({ route, navigation }) {
 							onPress={React.useCallback(async () => {
 								const supported = await Linking.canOpenURL(`tel:${user.phone}`);
 								if (supported) {
-									await Linking.openURL(`tel:0708030570`);
+									await Linking.openURL(`tel:${user.phone}`);
 								} else {
 									Alert.alert("Error", "Cannot open tel link");
 								}
@@ -193,28 +194,28 @@ function Profile({ route, navigation }) {
 						</TouchableOpacity>
 					)}
 				</View>
+				<View style={styles.grade_wallet}>
+					<View style={styles.grade_wallet_item}>
+						<Text style={styles.grade_wallet_item_key}>Wallet: </Text>
+						<Text style={styles.grade_wallet_item_value}>
+							{user.wallet ? `${user.wallet} \u20B3` : "N/A"}
+						</Text>
+					</View>
+					<View style={styles.grade_wallet_item}>
+						<Text style={styles.grade_wallet_item_key}>Grade: </Text>
+						<Text style={styles.grade_wallet_item_value}>
+							{user.cursus_users[cursusI]?.grade
+								? user.cursus_users[cursusI]?.grade
+								: "N/A"}
+						</Text>
+					</View>
+				</View>
 				<View style={styles.cursus_picker_container}>
-					<Text style={{ color: colors.white, marginHorizontal: 5 }}>
+					<Text style={[styles.grade_wallet_item_key, { marginHorizontal: 5 }]}>
 						Cursus:
 					</Text>
-					{/* <Picker
-						selectedValue={cursusI}
-						style={styles.picker}
-						onValueChange={(itemValue) => setCursusI(itemValue)}
-						mode="dropdown"
-					>
-						{user.cursus_users.map((item, key) => (
-							<Picker.Item
-								label={item.cursus.name}
-								style={styles.picker_item}
-								value={key}
-								key={key}
-							/>
-						))}
-					</Picker> */}
 					<ModalDropdown
 						style={styles.picker}
-						textStyle={{ color: colors.white }}
 						defaultIndex={cursusI}
 						defaultValue={user.cursus_users[cursusI]?.cursus?.name}
 						options={user.cursus_users.map((item) => item.cursus.name)}
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	header: {
-		paddingTop: 10,
+		paddingTop: 20,
 		backgroundColor: colors.background,
 		minHeight: 300,
 		alignItems: "center",
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingHorizontal: 20,
 		position: "absolute",
-		top: 0,
+		top: 20,
 		left: 0,
 	},
 	level_container: {
@@ -468,6 +469,7 @@ const styles = StyleSheet.create({
 		fontWeight: "bold",
 		color: colors.white,
 		marginTop: 22,
+		fontFamily: "Montserrat-Bold",
 	},
 	login: {
 		fontSize: 10,
@@ -494,12 +496,9 @@ const styles = StyleSheet.create({
 		height: 50,
 		width: 200,
 		marginVertical: 10,
-		color: colors.white,
+		fontWeight: "bold",
 		backgroundColor: colors.darkText,
 		borderRadius: 20,
-		flexDirection: "row",
-		alignItems: "center",
-		justifyContent: "space-between",
 		paddingHorizontal: 20,
 	},
 	picker_item: {
@@ -595,6 +594,31 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "center",
 		alignItems: "center",
+	},
+	grade_wallet: {
+		flexDirection: "row",
+		width: "100%",
+		justifyContent: "center",
+	},
+	grade_wallet_item: {
+		// flex: 2,
+		marginHorizontal: 10,
+		justifyContent: "center",
+		flexDirection: "row",
+		alignItems: "center",
+	},
+	grade_wallet_item_key: {
+		color: colors.lightText,
+		fontSize: 12,
+	},
+	grade_wallet_item_value: {
+		color: colors.white,
+		fontWeight: "bold",
+		backgroundColor: colors.darkText,
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 10,
+		overflow: "hidden",
 	},
 });
 
