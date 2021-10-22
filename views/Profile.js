@@ -20,6 +20,8 @@ import SavingHelper from "../helpers/saving";
 import { saved_storage_key } from "../config/default";
 import useOrientation from "../hooks/useOrientation";
 import ModalDropdown from "react-native-modal-dropdown";
+import BoldText from "../components/BoldText";
+import RegularText from "../components/RegularText";
 Feather.loadFont();
 
 function Profile({ route, navigation }) {
@@ -137,12 +139,12 @@ function Profile({ route, navigation }) {
 					<AnimatedLevelCircle level={level} />
 					<View style={styles.level_number}>
 						<View style={{ flexDirection: "row", alignItems: "flex-end" }}>
-							<Text style={styles.level_number_high}>
+							<BoldText style={styles.level_number_high}>
 								{level_partie_entiere}
-							</Text>
-							<Text style={styles.level_number_low}>
+							</BoldText>
+							<BoldText style={styles.level_number_low}>
 								.{level_partie_flottante}
-							</Text>
+							</BoldText>
 						</View>
 					</View>
 					<Image
@@ -152,10 +154,10 @@ function Profile({ route, navigation }) {
 						style={styles.profile_picture}
 					/>
 				</View>
-				<Text
+				<BoldText
 					style={styles.fullname}
-				>{`${user.first_name} ${user.last_name}`}</Text>
-				<Text style={styles.login}>{user.login}</Text>
+				>{`${user.first_name} ${user.last_name}`}</BoldText>
+				<RegularText style={styles.login}>{user.login}</RegularText>
 				<View style={styles.contact_buttons}>
 					{!user.email || user.email === "hidden" ? (
 						<></>
@@ -196,24 +198,33 @@ function Profile({ route, navigation }) {
 				</View>
 				<View style={styles.grade_wallet}>
 					<View style={styles.grade_wallet_item}>
-						<Text style={styles.grade_wallet_item_key}>Wallet: </Text>
-						<Text style={styles.grade_wallet_item_value}>
+						<RegularText style={styles.grade_wallet_item_key}>
+							Wallet:{" "}
+						</RegularText>
+						<BoldText style={styles.grade_wallet_item_value}>
 							{user.wallet ? `${user.wallet} \u20B3` : "N/A"}
-						</Text>
+						</BoldText>
 					</View>
 					<View style={styles.grade_wallet_item}>
-						<Text style={styles.grade_wallet_item_key}>Grade: </Text>
-						<Text style={styles.grade_wallet_item_value}>
+						<RegularText style={styles.grade_wallet_item_key}>
+							Grade:{" "}
+						</RegularText>
+						<BoldText style={styles.grade_wallet_item_value}>
 							{user.cursus_users[cursusI]?.grade
 								? user.cursus_users[cursusI]?.grade
+								: user.cursus_users[cursusI]?.cursus?.name ===
+								  "Piscine C décloisonnée"
+								? "Novice"
 								: "N/A"}
-						</Text>
+						</BoldText>
 					</View>
 				</View>
 				<View style={styles.cursus_picker_container}>
-					<Text style={[styles.grade_wallet_item_key, { marginHorizontal: 5 }]}>
+					<RegularText
+						style={[styles.grade_wallet_item_key, { marginHorizontal: 5 }]}
+					>
 						Cursus:
-					</Text>
+					</RegularText>
 					<ModalDropdown
 						style={styles.picker}
 						defaultIndex={cursusI}
@@ -234,13 +245,13 @@ function Profile({ route, navigation }) {
 									height: 40,
 								}}
 							>
-								<Text
+								<RegularText
 									style={{
 										color: selected ? colors.white : colors.lightText,
 									}}
 								>
 									{option}
-								</Text>
+								</RegularText>
 							</View>
 						)}
 						onSelect={(index) => setCursusI(index)}
@@ -288,7 +299,7 @@ function Profile({ route, navigation }) {
 						onPress={() => setSelected("projects")}
 					>
 						<Feather name="pie-chart" color={colors.white} size={20} />
-						<Text style={styles.projects_title_text}>Projects</Text>
+						<BoldText style={styles.projects_title_text}>Projects</BoldText>
 					</TouchableOpacity>
 					<TouchableOpacity
 						style={[
@@ -300,7 +311,7 @@ function Profile({ route, navigation }) {
 						onPress={() => setSelected("skills")}
 					>
 						<Feather name="award" color={colors.white} size={20} />
-						<Text style={styles.projects_title_text}>Skills</Text>
+						<BoldText style={styles.projects_title_text}>Skills</BoldText>
 					</TouchableOpacity>
 				</View>
 				{selected === "projects" ? (
@@ -322,26 +333,33 @@ function Profile({ route, navigation }) {
 								>
 									<View style={styles.project_entry_col1}>
 										{item.status === "finished" ? (
-											<Text
+											<BoldText
 												style={[
 													styles.final_mark,
 													{
-														color: item["validated?"]
-															? colors.success
-															: colors.failure,
+														color:
+															item["validated?"] === null
+																? colors.lightText
+																: item["validated?"]
+																? colors.success
+																: colors.failure,
+														fontSize: item["validated?"] === null ? 18 : 25,
 													},
 												]}
 											>
-												{item.final_mark}
-											</Text>
+												{item.final_mark !== null ? item.final_mark : "N/A"}
+											</BoldText>
 										) : (
 											<Feather name="clock" size={30} color={colors.warning} />
 										)}
 									</View>
 									<View style={styles.project_entry_col2}>
-										<Text style={styles.project_name}>
+										<RegularText style={styles.project_name}>
 											{item.project?.name}
-										</Text>
+										</RegularText>
+										<RegularText style={styles.project_slug}>
+											{item.project?.slug}
+										</RegularText>
 									</View>
 								</View>
 							) : (
@@ -369,10 +387,12 @@ function Profile({ route, navigation }) {
 									]}
 								>
 									<View style={styles.skill_entry}>
-										<Text style={styles.skill_level}>
+										<BoldText style={styles.skill_level}>
 											{item.level.toFixed(2)}
-										</Text>
-										<Text style={styles.skill_name}>{item.name}</Text>
+										</BoldText>
+										<RegularText style={styles.skill_name}>
+											{item.name}
+										</RegularText>
 									</View>
 								</View>
 							)}
@@ -387,9 +407,9 @@ function Profile({ route, navigation }) {
 						/>
 						<View style={styles.swipe_for_more}>
 							<Feather name="chevron-left" color={colors.lightText} size={10} />
-							<Text style={{ color: colors.lightText, fontSize: 10 }}>
+							<RegularText style={{ color: colors.lightText, fontSize: 10 }}>
 								Swipe for more
-							</Text>
+							</RegularText>
 							<Feather
 								name="chevron-right"
 								color={colors.lightText}
@@ -469,7 +489,6 @@ const styles = StyleSheet.create({
 		fontWeight: "bold",
 		color: colors.white,
 		marginTop: 22,
-		fontFamily: "Montserrat-Bold",
 	},
 	login: {
 		fontSize: 10,
@@ -550,6 +569,12 @@ const styles = StyleSheet.create({
 	project_name: {
 		color: colors.white,
 		fontSize: 15,
+		// marginLeft: 10,
+	},
+	project_slug: {
+		color: colors.lightText,
+		fontSize: 10,
+		fontStyle: "italic",
 		// marginLeft: 10,
 	},
 	buttons_group: {

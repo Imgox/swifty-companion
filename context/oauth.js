@@ -26,7 +26,7 @@ function OauthContextProvider({ children }) {
 			});
 			return token;
 		} catch (error) {
-			console.log(error);
+			throw error;
 		}
 	};
 
@@ -57,7 +57,10 @@ function OauthContextProvider({ children }) {
 					try {
 						await generateToken();
 					} catch (error) {
-						console.log(error);
+						setState({
+							token: "error",
+							expiry_timestamp: -1,
+						});
 					}
 				}
 			}
@@ -73,8 +76,13 @@ function OauthContextProvider({ children }) {
 			value={{
 				...state,
 				checkAndGenerateToken: async () => {
-					if (!state.token || new Date().valueOf() >= state.expiry_timestamp)
-						await generateToken();
+					if (!state.token || new Date().valueOf() >= state.expiry_timestamp) {
+						try {
+							await generateToken();
+						} catch (error) {
+							throw error;
+						}
+					}
 				},
 			}}
 		>

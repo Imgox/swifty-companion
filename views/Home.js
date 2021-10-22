@@ -17,14 +17,14 @@ import {
 	TouchableWithoutFeedback,
 } from "react-native";
 import colors from "../assets/colors";
-import { recent_storage_key, saved_storage_key } from "../config/default";
 import { OauthContext } from "../context/oauth";
 import ApiHelper from "../helpers/api";
 import SavingHelper from "../helpers/saving";
-import storage from "../services/storage";
 import Feather from "react-native-vector-icons/Feather";
 import SaveIcon from "../components/SaveIcon";
 import useOrientation from "../hooks/useOrientation";
+import BoldText from "../components/BoldText";
+import RegularText from "../components/RegularText";
 Feather.loadFont();
 
 function Home({ navigation }) {
@@ -37,7 +37,13 @@ function Home({ navigation }) {
 
 	React.useEffect(() => {
 		if (!token) setLoading(true);
-		else setLoading(false);
+		else if (token === "error") {
+			Alert.alert(
+				"Connection error",
+				"We can't reach the 42 intranet servers, please try again later."
+			);
+			setLoading(false);
+		} else setLoading(false);
 	}, [token]);
 
 	React.useEffect(() => {
@@ -77,6 +83,7 @@ function Home({ navigation }) {
 			setLoading(false);
 			navigation.navigate("Profile", { user_data });
 		} catch (error) {
+			console.log("dfdfdfdf", error);
 			setLoading(false);
 			if (
 				error.response &&
@@ -85,10 +92,7 @@ function Home({ navigation }) {
 			) {
 				Alert.alert("User not found", "Please check your login and try again");
 			} else {
-				Alert.alert(
-					"Connection error",
-					"We can't reach the 42 intranet servers, please try again later."
-				);
+				console.log(error);
 			}
 		}
 	};
@@ -127,7 +131,7 @@ function Home({ navigation }) {
 							style={({ pressed }) => [
 								{
 									backgroundColor:
-										loading || !login
+										loading || !login || token === "error"
 											? colors.disabledLight
 											: pressed
 											? colors.darkText
@@ -137,12 +141,12 @@ function Home({ navigation }) {
 								styles.button,
 							]}
 							onPress={() => findUser(login)}
-							disabled={loading || !login}
+							disabled={loading || !login || token === "error"}
 						>
 							{loading ? (
 								<ActivityIndicator color={colors.darkText} />
 							) : (
-								<Text>Search</Text>
+								<BoldText style={{ color: colors.darkText }}>Search</BoldText>
 							)}
 						</Pressable>
 					</View>
@@ -158,7 +162,7 @@ function Home({ navigation }) {
 								<>
 									<View style={styles.heading_wrapper}>
 										<Feather name="clock" size={20} color={colors.white} />
-										<Text style={styles.heading}>Recent</Text>
+										<BoldText style={styles.heading}>Recent</BoldText>
 									</View>
 									<View style={styles.recents_container}>
 										{recents.map((item) => (
@@ -175,9 +179,9 @@ function Home({ navigation }) {
 															style={styles.saving_avatar}
 															source={item.avatar}
 														/>
-														<Text style={styles.saving_login}>
+														<RegularText style={styles.saving_login}>
 															{item.login}
-														</Text>
+														</RegularText>
 													</View>
 												</View>
 											</TouchableOpacity>
@@ -191,7 +195,7 @@ function Home({ navigation }) {
 								<>
 									<View style={styles.heading_wrapper}>
 										<SaveIcon fill size={20} color={colors.white} />
-										<Text style={styles.heading}>Saved</Text>
+										<BoldText style={styles.heading}>Saved</BoldText>
 									</View>
 									<FlatList
 										style={{ width: "100%", marginTop: 10 }}
@@ -207,9 +211,9 @@ function Home({ navigation }) {
 															style={styles.saving_avatar}
 															source={item.avatar}
 														/>
-														<Text style={styles.saving_login}>
+														<RegularText style={styles.saving_login}>
 															{item.login}
-														</Text>
+														</RegularText>
 													</View>
 													<TouchableOpacity
 														style={{ alignItems: "center" }}
@@ -219,9 +223,11 @@ function Home({ navigation }) {
 														}}
 													>
 														<SaveIcon size={20} />
-														<Text style={{ color: colors.white, fontSize: 8 }}>
+														<RegularText
+															style={{ color: colors.white, fontSize: 8 }}
+														>
 															Unsave
-														</Text>
+														</RegularText>
 													</TouchableOpacity>
 												</View>
 											</TouchableOpacity>

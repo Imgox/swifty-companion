@@ -7,12 +7,12 @@ const useOrientation = () => {
 	useEffect(() => {
 		const ori = isPortrait() ? "portrait" : "landscape";
 		setOrientation(ori);
-	}, []);
 
-	Dimensions.addEventListener("change", () => {
-		const ori = isPortrait() ? "portrait" : "landscape";
-		setOrientation(ori);
-	});
+		Dimensions.addEventListener("change", () => {
+			const ori = isPortrait() ? "portrait" : "landscape";
+			setOrientation(ori);
+		});
+	}, []);
 
 	const isPortrait = () => {
 		const dim = Dimensions.get("screen");

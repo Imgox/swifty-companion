@@ -1,14 +1,22 @@
 import React from "react";
-import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "./views/Home";
 import Profile from "./views/Profile";
 import { OauthContextProvider } from "./context/oauth";
+import {
+	useFonts,
+	Montserrat_700Bold,
+	Montserrat_400Regular,
+} from "@expo-google-fonts/montserrat";
+import AppLoading from "expo-app-loading";
 
 const Stack = createNativeStackNavigator();
-
 function App() {
+	const [loadFonts] = useFonts({ Montserrat_400Regular, Montserrat_700Bold });
+
+	if (!loadFonts) return <AppLoading />;
+
 	return (
 		<NavigationContainer>
 			<OauthContextProvider>
@@ -32,14 +40,5 @@ function App() {
 		</NavigationContainer>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: "#fff",
-		alignItems: "center",
-		justifyContent: "center",
-	},
-});
 
 export default App;
