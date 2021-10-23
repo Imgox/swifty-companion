@@ -83,7 +83,7 @@ function Home({ navigation }) {
 			setLoading(false);
 			navigation.navigate("Profile", { user_data });
 		} catch (error) {
-			console.log("dfdfdfdf", error);
+			console.log(error);
 			setLoading(false);
 			if (
 				error.response &&

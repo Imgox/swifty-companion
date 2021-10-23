@@ -2,16 +2,21 @@ import { useState, useEffect } from "react";
 import { Dimensions } from "react-native";
 
 const useOrientation = () => {
-	const [orientation, setOrientation] = useState();
+	const [orientation, setOrientation] = useState("portrait");
 
 	useEffect(() => {
+		let isMounted = true;
 		const ori = isPortrait() ? "portrait" : "landscape";
 		setOrientation(ori);
 
 		Dimensions.addEventListener("change", () => {
 			const ori = isPortrait() ? "portrait" : "landscape";
-			setOrientation(ori);
+			if (isMounted) setOrientation(ori);
 		});
+
+		return () => {
+			isMounted = false;
+		};
 	}, []);
 
 	const isPortrait = () => {
