@@ -34,7 +34,7 @@ Open the `./config/default.js` file:
   };
 
 ```
-Then change the `client_id` and `client_secret` to your app id and app secret. if you need information about how you can get the app id and app secret, [Click here](/#create-42-app).
+Then change the `client_id` and `client_secret` to your app id and app secret. if you need information about how you can get the app id and app secret, [Click here](#create-42-app).
 
 ## Run the developement server:
 You are going to need `expo-cli` installed globally for this to work
